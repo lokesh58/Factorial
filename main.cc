@@ -152,7 +152,6 @@ int main() {
 	bigInt factorial("1");
 	for (bigInt i("2"); i <= x; ++i) {
 		factorial = factorial*i;
-		cout << "DEBUG: i = " << i << " factorial = " << factorial << endl;
 	}
 
 	cout << "Factorial of " << x << " is: " << factorial << endl;
