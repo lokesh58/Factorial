@@ -22,10 +22,9 @@ class bigInt {
 };
 
 bigInt::bigInt(const string &v) {
-	for (unsigned long long i = v.length()-1; i > 0; --i) {
-		val.push_back(v[i]-'0');
+	for (auto it = v.rbegin(); it != v.rend(); ++it) {
+		val.push_back(*it-'0');
 	}
-	val.push_back(v[0]-'0');
 }
 
 ostream& operator << (ostream &os, const bigInt &bi) {
@@ -43,18 +42,21 @@ istream& operator >> (istream &is, bigInt &bi) {
 }
 
 bool operator <= (const bigInt &bi1, const bigInt &bi2) {
-	if (bi1.val.size() > bi2.val.size()) {
-		return false;
-	} else if (bi1.val.size() < bi2.val.size()) {
-		return true;
-	} else {
+	if (bi1.val.size() == bi2.val.size()) {
 		unsigned long long sz = bi1.val.size();
-		for (unsigned long long i = 0; i < sz; ++i) {
-			if (bi1.val[i] > bi2.val[i]) {
-				return false;
-			}
+		if (sz == 0) {
+			return false;
+		} else {
+			do {
+				--sz;
+				if (bi1.val[sz] != bi2.val[sz]) {
+					return bi1.val[sz] < bi2.val[sz];
+				}
+			} while (sz > 0);
+			return true;
 		}
-		return true;
+	} else {
+		return bi1.val.size() < bi2.val.size();
 	}
 }
 
@@ -90,20 +92,46 @@ bigInt operator + (const bigInt &bi1, const bigInt &bi2) {
 }
 
 bigInt& operator ++ (bigInt &bi) {
-	return bi = bi+bigInt("1");
+	short carry = 1;
+	for (unsigned long long i = 0; i < bi.val.size() && carry > 0; ++i) {
+		bi.val[i] += 1;
+		carry = bi.val[i]/10;
+		bi.val[i] %= 10;
+	}
+	if (carry) {
+		bi.val.push_back(carry);
+	}
+	return bi;
 }
 
 bigInt operator * (const bigInt &bi1, const bigInt &bi2) {
-	bigInt res("0");
+	bigInt res("0"), tmp;
+	const bigInt *big, *small;
 	if (bi1 <= bi2) {
-		for (bigInt i("1"); i <= bi1; ++i) {
-			res = res+bi2;
-		}
+		small = &bi1;
+		big = &bi2;
 	} else {
-		for (bigInt i("1"); i <= bi2; ++i) {
-			res = res+bi1;
-		}
+		small = &bi2;
+		big = &bi1;
 	}
+	for (unsigned long long i = 0; i < small->val.size(); ++i) {
+		tmp.val.clear();
+		for (unsigned long long j = 0; j < i; ++j) {
+			tmp.val.push_back(0);
+		}
+		short carry = 0, currDig;
+		for (unsigned long long j = 0; j < big->val.size(); ++j) {
+			currDig = big->val[j] * small->val[i] + carry;
+			carry = currDig / 10;
+			currDig %= 10;
+			tmp.val.push_back(currDig);
+		}
+		if (carry) {
+			tmp.val.push_back(carry);
+		}
+		res = res+tmp;
+	}
+
 	return res;
 }
 
@@ -117,13 +145,14 @@ bigInt operator * (const bigInt &bi, const unsigned long long &ull) {
 }
 
 int main() {
-	unsigned long long x;
+	bigInt x;
 	cout << "Enter the value of x: ";
 	cin >> x;
 	
 	bigInt factorial("1");
-	for (unsigned long long i = 2; i <= x; ++i) {
+	for (bigInt i("2"); i <= x; ++i) {
 		factorial = factorial*i;
+		cout << "DEBUG: i = " << i << " factorial = " << factorial << endl;
 	}
 
 	cout << "Factorial of " << x << " is: " << factorial << endl;
